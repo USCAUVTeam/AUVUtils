@@ -1,0 +1,5 @@
+int64 pwm_val # in microseconds
+int64 freq # The frequency of the signal in Hz
+int64 channel # The channel of the PCA board you want to output to
+---
+bool okay
