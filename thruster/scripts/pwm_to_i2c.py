@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import busio
@@ -29,9 +29,9 @@ def pwm_to_i2c_server():
     global voltage, pca
     i2c_bus = busio.I2C(board.SCL, board.SDA)
 
+    rospy.init_node("pwm_to_i2c_server", log_level = rospy.DEBUG)
     pca = PCA9685(i2c_bus)
     pca.frequency = rospy.get_param("freq", default=286)
-    rospy.init_node("pwm_to_i2c_server", log_level = rospy.DEBUG)
     s = rospy.Service('pwm_to_i2c', PWMToI2C, pwm_to_i2c)
     rospy.loginfo("Successfully created the pwm_to_i2c service")
     rospy.spin()

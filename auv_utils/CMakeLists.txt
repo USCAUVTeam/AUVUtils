@@ -10,7 +10,6 @@ project(auv_utils)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  uuv_gazebo_ros_plugins_msgs
   std_msgs
 )
 

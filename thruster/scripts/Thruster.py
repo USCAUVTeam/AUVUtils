@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from uuv_gazebo_ros_plugins_msgs.msg import FloatStamped
+from thruster.msg import FloatStamped
 from scipy import interpolate
 import numpy as np
 import rospkg

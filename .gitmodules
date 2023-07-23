@@ -1,0 +1,3 @@
+[submodule "JHPWMDriver"]
+	path = JHPWMDriver
+	url = git@github.com:jetsonhacks/JHPWMDriver.git
