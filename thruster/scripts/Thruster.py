@@ -73,7 +73,7 @@ class Thruster():
             y2 = self.data[2*i+1]['y{}pos'.format(i+1)].array
             self.interp_functions.append([interpolate.interp1d(x1[~np.isnan(x1)], y1[~np.isnan(y1)], kind='cubic', bounds_error=False, fill_value=1500), 
                                 interpolate.interp1d(x2[~np.isnan(x2)], y2[~np.isnan(y2)], kind='cubic', bounds_error=False, fill_value=1500)]) 
-        self.update_pwm()
+        self.set_thrust(self.current_thrust)
 
     def kill_thruster(self):
         self.running = False
@@ -176,8 +176,7 @@ def thruster_state_callback(data):
 def thruster_output_callback(data):
     global thruster
     rospy.logdebug("Inside callback of thruster_%s", str(thruster.thruster_num))
-    thruster.current_thrust = data.data
-    thruster.update_pwm()
+    thruster.set_thrust(data.data)
     if thruster.output == "sim":
         thruster.publish_to_sim()
     else:
