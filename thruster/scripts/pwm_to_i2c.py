@@ -19,6 +19,8 @@ def pwm_to_i2c(req):
     global voltage, pca
     try:
         rospy.logdebug("Received pwm signal: %d", req.pwm_val)
+        rospy.logdebug("Received freq signal: %d", req.freq)
+        rospy.logdebug("Received channel signal: %d", req.channel)
         pca.channels[req.channel].duty_cycle = round(microseconds_to_int16(req.pwm_val, req.freq))
         return PWMToI2CResponse(True)
     except Exception as e:
@@ -29,7 +31,7 @@ def pwm_to_i2c_server():
     global voltage, pca
     i2c_bus = busio.I2C(board.SCL, board.SDA)
 
-    rospy.init_node("pwm_to_i2c_server", log_level = rospy.DEBUG)
+    rospy.init_node("pwm_to_i2c_server", log_level = rospy.INFO)
     pca = PCA9685(i2c_bus)
     pca.frequency = rospy.get_param("freq", default=286)
     s = rospy.Service('pwm_to_i2c', PWMToI2C, pwm_to_i2c)

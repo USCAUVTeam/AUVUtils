@@ -14,7 +14,7 @@ class Thruster():
     the output to depend whether the Thruster is used in the sim (output will be a FloatStamped)
     or in real life (output will be a PWM or I2C signal).
     '''
-    def __init__(self, saturation=3, voltage=12, thruster_num = 0, output="sim", freq=0):
+    def __init__(self, saturation=3, voltage=12, thruster_num = 0, output="sim", freq=218):
         '''
         Parameters
         -----
@@ -32,7 +32,7 @@ class Thruster():
         self.saturation = saturation
         self.current_thrust = 0
         self.output = output
-        self.pwm = None
+        self.pwm = 1500
         self.freq = freq
         self.duty_cycle = None
         self.pub = None
@@ -119,12 +119,12 @@ class Thruster():
 
     def update_pwm(self):
         # This calculates the approximate PWM signal necessary to get the needed thrust
-        if self.current_thrust > 0:
+        if not self.running:
+            self.current_thrust = 0
+        if self.current_thrust >= 0:
             is_positive = 1
         elif self.current_thrust < 0:
             is_positive = 0
-        else:
-            return 1500
             
         y1 = self.interp_functions[self.VALID_VOLTAGES.index(self.max_voltage)][is_positive](self.current_thrust)
         y0 = self.interp_functions[self.VALID_VOLTAGES.index(self.min_voltage)][is_positive](self.current_thrust)
@@ -139,10 +139,10 @@ class Thruster():
         if self.output == "sim":
             rospy.logwarn("Unable to send i2c command to PCA board cause output mode is in sim mode and not real mode!")
             return
-        rospy.wait_for_service('pwm_to_i2c')
+        rospy.wait_for_service('/pwm_to_i2c')
         try:
-            pwm_to_i2c = rospy.ServiceProxy('pwm_to_i2c', PWMToI2C)
-            resp = pwm_to_i2c(self.pwm, self.freq, self.thruster_num)
+            pwm_to_i2c = rospy.ServiceProxy('/pwm_to_i2c', PWMToI2C)
+            resp = pwm_to_i2c(int(self.pwm), int(self.freq), int(self.thruster_num))
             return resp.okay
         except rospy.ServiceException as e:
             print("Service call failed: %s"%e)
@@ -162,11 +162,7 @@ class Thruster():
         return self.pwm
 
     def reset(self):
-        self.current_thrust = 0
-        if self.output == "pwm":
-            self.update_pwm()
-        elif self.output == "i2c":
-            self.update_i2c()
+        self.set_thrust(0)
 
 def thruster_state_callback(data):
     global thruster
@@ -193,11 +189,12 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         raise ValueError("Not enough input arguments to create thruster node!")
     node_name = "thruster_" + str(num_thruster)
-    rospy.init_node(node_name, log_level=rospy.DEBUG, anonymous=False)
-
-    thruster = Thruster(thruster_num=num_thruster, output=output_type)
+    rospy.init_node(node_name, log_level=rospy.INFO, anonymous=False)
+    frequency = rospy.get_param("/freq", default=218)
+    thruster = Thruster(thruster_num=num_thruster, output=output_type, freq = frequency)
     
-    rate = rospy.Rate(10)
+    if output_type == "sim":
+        rate = rospy.Rate(10)
 
     # Publishers
     rospy.loginfo("Thruster output type = %s", output_type)
