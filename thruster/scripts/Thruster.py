@@ -14,7 +14,7 @@ class Thruster():
     the output to depend whether the Thruster is used in the sim (output will be a FloatStamped)
     or in real life (output will be a PWM or I2C signal).
     '''
-    def __init__(self, saturation=3, voltage=12, thruster_num = 0, output="sim", freq=218):
+    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218):
         '''
         Parameters
         -----
@@ -33,6 +33,7 @@ class Thruster():
         self.current_thrust = 0
         self.output = output
         self.pwm = 1500
+        self.is_reverse = is_reverse
         self.freq = freq
         self.duty_cycle = None
         self.pub = None
@@ -121,13 +122,14 @@ class Thruster():
         # This calculates the approximate PWM signal necessary to get the needed thrust
         if not self.running:
             self.current_thrust = 0
-        if self.current_thrust >= 0:
+        if self.current_thrust <= 0 and self.is_reverse:
             is_positive = 1
-        elif self.current_thrust < 0:
+        elif self.current_thrust >= 0 and not self.is_reverse:
+            is_positive = 1
+        else:
             is_positive = 0
-            
-        y1 = self.interp_functions[self.VALID_VOLTAGES.index(self.max_voltage)][is_positive](self.current_thrust)
-        y0 = self.interp_functions[self.VALID_VOLTAGES.index(self.min_voltage)][is_positive](self.current_thrust)
+        y1 = self.interp_functions[self.VALID_VOLTAGES.index(self.max_voltage)][is_positive](self.current_thrust * (-1 if self.is_reverse else 1))
+        y0 = self.interp_functions[self.VALID_VOLTAGES.index(self.min_voltage)][is_positive](self.current_thrust * (-1 if self.is_reverse else 1))
         d = y1 - y0
         self.pwm = d*(self.voltage-(self.min_voltage))/2+y0
 
@@ -185,12 +187,14 @@ def thruster_output_callback(data):
 if __name__ == "__main__":
     num_thruster = sys.argv[1]
     output_type = sys.argv[2]
-    if len(sys.argv) < 3:
+    reverse = sys.argv[3]
+    if len(sys.argv) < 4:
+        rospy.logerr("Not enough input arguments to create thruster node!")
         raise ValueError("Not enough input arguments to create thruster node!")
     node_name = "thruster_" + str(num_thruster)
     rospy.init_node(node_name, log_level=rospy.INFO, anonymous=False)
     frequency = rospy.get_param("/freq", default=218)
-    thruster = Thruster(thruster_num=num_thruster, output=output_type, freq = frequency)
+    thruster = Thruster(thruster_num=num_thruster, is_reverse=reverse, output=output_type, freq = frequency)
     
     if output_type == "sim":
         rate = rospy.Rate(10)

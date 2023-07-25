@@ -11,7 +11,6 @@ from thruster.srv import PWMToI2C, PWMToI2CResponse
 voltage = None
 pca = None
 
-
 def microseconds_to_int16(time, freq):
     return time*freq*65536/1000000
 
@@ -29,10 +28,15 @@ def pwm_to_i2c(req):
 
 def pwm_to_i2c_server():
     global voltage, pca
+    i2c_addr = sys.argv[1]
+    if len(sys.argv < 2):
+        rospy.logerr("Not enough input arguments to create pwm_to_i2c node!")
+        raise ValueError("Not enough input arguments to create pwm_to_i2c node!")
+
     i2c_bus = busio.I2C(board.SCL, board.SDA)
 
     rospy.init_node("pwm_to_i2c_server", log_level = rospy.INFO)
-    pca = PCA9685(i2c_bus)
+    pca = PCA9685(i2c_bus, address=int(i2c_addr))
     pca.frequency = rospy.get_param("freq", default=286)
     s = rospy.Service('pwm_to_i2c', PWMToI2C, pwm_to_i2c)
     rospy.loginfo("Successfully created the pwm_to_i2c service")
