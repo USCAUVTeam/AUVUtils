@@ -6,7 +6,8 @@ import numpy as np
 import rospkg
 import pandas
 from thruster.srv import *
-from std_msgs.msg import Bool, Float64, Int64
+from std_msgs.msg import Bool, Float64
+from time import sleep
 
 class Thruster():
     '''
@@ -41,6 +42,7 @@ class Thruster():
         self.running = True
         self.thruster_num = thruster_num
         self.channel_num = 0
+        self.pwm_to_i2c = None
         # rospy.init_node("thruster_" + str(self.thruster_num))
         self.min_voltage = rospy.get_param("/min_voltage", default=10)
         self.max_voltage = rospy.get_param("/max_voltage", default=20)
@@ -151,7 +153,7 @@ class Thruster():
             # if (int(self.thruster_num) == 3):
             #     self.test_pub.publish(Int64(self.pwm))
             # rospy.wait_for_service('/pwm_to_i2c', timeout=0.2)
-            self.pwm_to_i2c = rospy.ServiceProxy(self.pca_name, PWMToI2C)
+            # self.pwm_to_i2c = rospy.ServiceProxy(self.pca_name, PWMToI2C)
             resp = self.pwm_to_i2c(int(self.pwm), int(self.freq), int(self.channel_num))
             return resp.okay
         except Exception as e:
@@ -224,6 +226,11 @@ if __name__ == "__main__":
     if (output_type == "real"):
         rospy.wait_for_service(thruster.pca_name, timeout=10)
         thruster.channel_num = (int(thruster.thruster_num)%4) + 1
+        thruster.pwm_to_i2c = rospy.ServiceProxy(thruster.pca_name, PWMToI2C)
+        rospy.loginfo("Thruster initializing from i2c")
+        thruster.send_i2c()
+        sleep(3)
+        rospy.loginfo("Initial thruster i2c connection initialed")
         # rospy.wait_for_service(pca_srv, timeout=30)
     rospy.spin()
 

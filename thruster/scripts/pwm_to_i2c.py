@@ -49,10 +49,10 @@ def reset_pca(data):
 
 def pwm_to_i2c_server():
     global pca, i2c_addr
-    i2c_addr = sys.argv[1]
     if len(sys.argv) < 2:
         rospy.logerr("Not enough input arguments to create pwm_to_i2c node!")
         raise ValueError("Not enough input arguments to create pwm_to_i2c node!")
+    i2c_addr = sys.argv[1]
 
     i2c_bus = busio.I2C(board.SCL, board.SDA)
 
@@ -62,7 +62,7 @@ def pwm_to_i2c_server():
     srv_name = "/pwm_to_i2c_" + i2c_addr
     s = rospy.Service(srv_name, PWMToI2C, pwm_to_i2c)
     rospy.loginfo("Successfully created the pwm_to_i2c service")
-    rospy.Subscriber("soft_kill_switch", Bool, reset_pca)
+    rospy.Subscriber("/soft_kill_switch", Bool, reset_pca)
     rospy.spin()
 
 if __name__ == "__main__":
