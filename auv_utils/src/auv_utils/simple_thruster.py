@@ -114,4 +114,4 @@ class Thruster():
 # if __name__ == "__main__":
 #     sat = 3
 #     test_thruster = Thruster(sat)
-#     print(test_thruster.get_pwm())
+#     print(test_thruster.get_pwm())    
