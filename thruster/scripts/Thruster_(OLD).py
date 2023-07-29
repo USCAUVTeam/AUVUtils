@@ -1,6 +1,11 @@
 #!/usr/bin/env python
+
+'''
+This code was used for the raspberry pi and connects to the PCA boards directly rather than
+using the ESP8266
+'''
 import rospy
-from thruster.msg import FloatStamped, ThrusterOutput
+from thruster.msg import FloatStamped
 from scipy import interpolate
 import numpy as np
 import rospkg
@@ -15,7 +20,7 @@ class Thruster():
     the output to depend whether the Thruster is used in the sim (output will be a FloatStamped)
     or in real life (output will be a PWM or I2C signal).
     '''
-    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pub_name=""):
+    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pca_name="/pwm_to_i2c"):
         '''
         Parameters
         -----
@@ -56,8 +61,6 @@ class Thruster():
         if self.output == "sim":
             # Publishes the output to the simulation mantaray
             self.pub = rospy.Publisher('/' + self.namespace + '/thrusters/'+str(self.thruster_num)+'/input', FloatStamped, queue_size = 10)
-        elif self.output == "real":
-            self.pub = rospy.Publisher(pub_name, ThrusterOutput, queue_size=1)
 
         r = rospkg.RosPack()
         dir = r.get_path('thruster')
@@ -147,13 +150,21 @@ class Thruster():
     def send_i2c(self):
         # This sends an I2C signal to the PCA 9685 board to move the thruster IRL
         if self.output == "sim":
+            # if (int(self.thruster_num) == 3):
+            #     self.test_pub.publish(Int64(-10))
             rospy.logwarn("Unable to send i2c command to PCA board cause output mode is in sim mode and not real mode!")
             return
-        elif self.output == "real":
-            try:
-                self.pub.publish(int(self.thruster_num), int(self.pca_num), int(self.channel_num), int(self.pwm))
-            except Exception as e:
-                rospy.logdebug("Service call failed: %s"%e)
+        try:
+            # if (int(self.thruster_num) == 3):
+            #     self.test_pub.publish(Int64(self.pwm))
+            # rospy.wait_for_service('/pwm_to_i2c', timeout=0.2)
+            # self.pwm_to_i2c = rospy.ServiceProxy(self.pca_name, PWMToI2C)
+            resp = self.pwm_to_i2c(int(self.pwm), int(self.freq), int(self.channel_num))
+            return resp.okay
+        except Exception as e:
+            # if (int(self.thruster_num) == 3):
+            #     self.test_pub.publish(Int64(-20))
+            rospy.logdebug("Service call failed: %s"%e)
     
     def publish_to_sim(self):
         if self.output=="sim":
@@ -181,7 +192,7 @@ def thruster_state_callback(data):
         thruster.kill_thruster()
         rospy.loginfo("Killing thruster")
 
-def thruster_input_callback(data):
+def thruster_output_callback(data):
     global thruster
     rospy.logdebug("Inside callback of thruster_%s", str(thruster.thruster_num))
     thruster.set_thrust(data.data)
@@ -202,20 +213,26 @@ if __name__ == "__main__":
     rospy.init_node(node_name, log_level=rospy.DEBUG, anonymous=False)
     output_type = rospy.get_param("/output_type", default="sim")
     frequency = rospy.get_param("/freq", default=218)
-    output_name = "thruster_" + num_thruster + "/output"
-    thruster = Thruster(thruster_num=num_thruster, is_reverse=reverse, output=output_type, freq = frequency, pub_name=output_name)
+    pca_srv = "/pwm_to_i2c_" + pca_num
+    thruster = Thruster(thruster_num=num_thruster, is_reverse=reverse, output=output_type, freq = frequency, pca_name=pca_srv)
     
     if output_type == "sim":
         rate = rospy.Rate(10)
 
-    rospy.logdebug("Thruster output type = %s", output_type)
+    # Publishers
+    # if (int(num_thruster) == 3):
+    # thruster.test_pub = rospy.Publisher('/mantaray/i2c_pwm_val', Int64, queue_size=10)
+    rospy.loginfo("Thruster output type = %s", output_type)
     
     # Subscribers
     rospy.Subscriber('/mantaray/thruster_'+str(num_thruster)+'/is_on', Bool, thruster_state_callback)
-    rospy.Subscriber('/mantaray/thruster_'+str(num_thruster)+'/input', Float64, thruster_input_callback)
+    rospy.Subscriber('/mantaray/thruster_'+str(num_thruster)+'/output', Float64, thruster_output_callback)
     
     if (output_type == "real"):
+        rospy.wait_for_service(thruster.pca_name, timeout=10)
         thruster.channel_num = (int(thruster.thruster_num)%4) + 1
+        thruster.pwm_to_i2c = rospy.ServiceProxy(thruster.pca_name, PWMToI2C)
+        rospy.loginfo("Thruster initializing from i2c")
         thruster.send_i2c()
         sleep(3)
         rospy.loginfo("Initial thruster i2c connection initialed")
