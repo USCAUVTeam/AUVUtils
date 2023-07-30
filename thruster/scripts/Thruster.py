@@ -15,7 +15,7 @@ class Thruster():
     the output to depend whether the Thruster is used in the sim (output will be a FloatStamped)
     or in real life (output will be a PWM or I2C signal).
     '''
-    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pub_name=""):
+    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pub_name="", _pca_num=pca_num):
         '''
         Parameters
         -----
@@ -36,7 +36,7 @@ class Thruster():
         self.pwm = 1500
         self.is_reverse = is_reverse
         self.freq = freq
-        self.pca_name = pca_name
+        self.pca_name = pub_name
         self.duty_cycle = None
         self.pub = None
         self.running = True
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     output_type = rospy.get_param("/output_type", default="sim")
     frequency = rospy.get_param("/freq", default=218)
     output_name = "thruster_" + num_thruster + "/output"
-    thruster = Thruster(thruster_num=num_thruster, is_reverse=reverse, output=output_type, freq = frequency, pub_name=output_name)
+    thruster = Thruster(thruster_num=num_thruster, is_reverse=reverse, output=output_type, freq = frequency, pub_name=output_name, _pca_num=pca_num)
     
     if output_type == "sim":
         rate = rospy.Rate(10)
