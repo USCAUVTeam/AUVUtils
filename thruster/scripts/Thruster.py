@@ -15,7 +15,7 @@ class Thruster():
     the output to depend whether the Thruster is used in the sim (output will be a FloatStamped)
     or in real life (output will be a PWM or I2C signal).
     '''
-    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pub_name="", _pca_num=pca_num):
+    def __init__(self, saturation=3, voltage=12, thruster_num = 0, is_reverse=False, output="sim", freq=218, pub_name="", _pca_num=0):
         '''
         Parameters
         -----
@@ -36,7 +36,7 @@ class Thruster():
         self.pwm = 1500
         self.is_reverse = is_reverse
         self.freq = freq
-        self.pca_name = pub_name
+        self.pca_num = _pca_num
         self.duty_cycle = None
         self.pub = None
         self.running = True
