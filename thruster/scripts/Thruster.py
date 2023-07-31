@@ -172,6 +172,11 @@ class Thruster():
     def reset(self):
         self.set_thrust(0)
 
+def get_current_thruster_num():
+    all_topics = rospy.get_published_topics("/mantaray")
+    thruster_topics = [topic[0] for topic in all_topics if "thruster" in topic[0]]
+    return len(thruster_topics)/3 
+
 def thruster_state_callback(data):
     global thruster
     if (data.data):
@@ -210,9 +215,10 @@ if __name__ == "__main__":
 
     rospy.logdebug("Thruster output type = %s", output_type)
     
+    current_thruster_num = get_current_thruster_num()
     # Subscribers
-    rospy.Subscriber('/mantaray/thruster_'+str(num_thruster)+'/is_on', Bool, thruster_state_callback)
-    rospy.Subscriber('/mantaray/thruster_'+str(num_thruster)+'/input', Float64, thruster_input_callback)
+    rospy.Subscriber('/mantaray/thruster_'+str(current_thruster_num)+'/is_on', Bool, thruster_state_callback)
+    rospy.Subscriber('/mantaray/thruster_'+str(current_thruster_num)+'/input', Float64, thruster_input_callback)
     
     if (output_type == "real"):
         thruster.channel_num = (int(thruster.thruster_num)%4) + 1
