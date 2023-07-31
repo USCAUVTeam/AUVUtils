@@ -196,10 +196,10 @@ def thruster_input_callback(data):
         thruster.send_i2c()
 
 if __name__ == "__main__":
-    num_thruster = sys.argv[1]
-    reverse = False if sys.argv[2] == "False" else True
-    pca_num = sys.argv[3]
-    current_thruster_num = sys.argv[4]
+    current_thruster_num = sys.argv[1]
+    num_thruster = sys.argv[2]
+    reverse = False if sys.argv[3] == "False" else True
+    pca_num = sys.argv[4]
 
     if len(sys.argv) < 5:
         rospy.logerr("Not enough input arguments to create thruster node!")
