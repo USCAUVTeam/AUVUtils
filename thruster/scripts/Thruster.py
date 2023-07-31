@@ -172,10 +172,10 @@ class Thruster():
     def reset(self):
         self.set_thrust(0)
 
-def get_current_thruster_num():
-    all_topics = rospy.get_published_topics("/mantaray")
-    thruster_topics = [topic[0] for topic in all_topics if "thruster" in topic[0]]
-    return len(thruster_topics)/3 
+# def get_current_thruster_num():
+#     all_topics = rospy.get_published_topics("/mantaray")
+#     thruster_topics = [topic[0] for topic in all_topics if "thruster" in topic[0]]
+#     return ceil(len(thruster_topics)/3)
 
 def thruster_state_callback(data):
     global thruster
@@ -199,8 +199,9 @@ if __name__ == "__main__":
     num_thruster = sys.argv[1]
     reverse = False if sys.argv[2] == "False" else True
     pca_num = sys.argv[3]
+    current_thruster_num = sys.argv[4]
 
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         rospy.logerr("Not enough input arguments to create thruster node!")
         raise ValueError("Not enough input arguments to create thruster node!")
     node_name = "thruster_" + str(num_thruster)
@@ -215,7 +216,7 @@ if __name__ == "__main__":
 
     rospy.logdebug("Thruster output type = %s", output_type)
     
-    current_thruster_num = get_current_thruster_num()
+    # current_thruster_num = get_current_thruster_num()
     # Subscribers
     rospy.Subscriber('/mantaray/thruster_'+str(current_thruster_num)+'/is_on', Bool, thruster_state_callback)
     rospy.Subscriber('/mantaray/thruster_'+str(current_thruster_num)+'/input', Float64, thruster_input_callback)
