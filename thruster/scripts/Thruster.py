@@ -122,7 +122,7 @@ class Thruster():
             if self.VALID_VOLTAGES[i]-int(volt) > -1:
                 self.min_voltage = self.VALID_VOLTAGES[i]
                 self.max_voltage = self.VALID_VOLTAGES[i+1]
-                self.voltage == volt
+                self.voltage == int(volt)
                 return
         rospy.logwarn("Voltage %d V is not a valid voltage for this thruster!", volt)
 
@@ -151,6 +151,7 @@ class Thruster():
             return
         elif self.output == "real":
             try:
+                rospy.logdebug("Publishing data")
                 self.pub.publish(int(self.thruster_num), int(self.pca_num), int(self.channel_num), int(self.pwm), float(self.current_thrust))
             except Exception as e:
                 rospy.logdebug("Service call failed: %s"%e)
