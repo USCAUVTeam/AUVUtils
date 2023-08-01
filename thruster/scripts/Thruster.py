@@ -151,7 +151,7 @@ class Thruster():
             return
         elif self.output == "real":
             try:
-                self.pub.publish(int(self.thruster_num), int(self.pca_num), int(self.channel_num), int(self.pwm))
+                self.pub.publish(int(self.thruster_num), int(self.pca_num), int(self.channel_num), int(self.pwm), float(self.current_thrust))
             except Exception as e:
                 rospy.logdebug("Service call failed: %s"%e)
     
